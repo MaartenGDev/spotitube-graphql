@@ -73,11 +73,15 @@ export class PlaylistService extends RestfulSpotitubeClientService {
                       id
                       name
                       owner
+                      tracks {
+                        duration
+                      }
                     }
           }`
       }).subscribe((response: ApolloQueryResult<{ createPlaylist: Playlist[] }>) => {
         const playlists = new PlaylistsImpl();
         playlists.playlists = response.data.createPlaylist;
+        playlists.length = this.calculateLengthOfPlaylist(playlists.playlists);
         res(playlists);
       });
     });
@@ -97,11 +101,15 @@ export class PlaylistService extends RestfulSpotitubeClientService {
                       id
                       name
                       owner
+                      tracks {
+                        duration
+                      }
                     }
           }`
       }).subscribe((response: ApolloQueryResult<{ updatePlaylist: Playlist[] }>) => {
         const playlists = new PlaylistsImpl();
         playlists.playlists = response.data.updatePlaylist;
+        playlists.length = this.calculateLengthOfPlaylist(playlists.playlists);
         res(playlists);
       });
     });
@@ -121,11 +129,15 @@ export class PlaylistService extends RestfulSpotitubeClientService {
                       id
                       name
                       owner
+                      tracks {
+                        duration
+                      }
                     }
           }`
       }).subscribe((response: ApolloQueryResult<{ deletePlaylist: Playlist[] }>) => {
         const playlists = new PlaylistsImpl();
         playlists.playlists = response.data.deletePlaylist;
+        playlists.length = this.calculateLengthOfPlaylist(playlists.playlists);
         res(playlists);
       });
     });
