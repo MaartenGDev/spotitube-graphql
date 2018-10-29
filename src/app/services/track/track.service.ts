@@ -57,9 +57,9 @@ export class TrackService extends RestfulSpotitubeClientService {
                       offlineAvailable
                     }
           }`
-      }).subscribe((response: ApolloQueryResult<{ tracks: Track[] }>) => {
-        const tracks: Tracks = new TracksImpl();
-        tracks.tracks = response.data.tracks;
+      }).subscribe((response: ApolloQueryResult<{ addTrackToPlaylist: Track[] }>) => {
+        const tracks = new TracksImpl();
+        tracks.tracks = response.data.addTrackToPlaylist;
         this.tracksUpdated.next();
         res(tracks);
       });
@@ -89,11 +89,13 @@ export class TrackService extends RestfulSpotitubeClientService {
                       offlineAvailable
                     }
           }`
-      }).subscribe((response: ApolloQueryResult<{ tracks: Track[] }>) => {
+      }).subscribe((response: ApolloQueryResult<{ removeTrackFromPlaylist: Track[] }>) => {
         const tracks: Tracks = new TracksImpl();
-        tracks.tracks = response.data.tracks;
-        this.tracksUpdated.next(tracks);
+        tracks.tracks = response.data.removeTrackFromPlaylist;
+        this.tracksUpdated.next();
         res(tracks);
+      }, err => {
+        console.log(err)
       });
     });
   }
@@ -108,6 +110,7 @@ export class TrackService extends RestfulSpotitubeClientService {
     const forPlaylistFilter = playlist !== null ? `(${inclusiveOrExclusiveFilter}: ${playlist.id })` : '';
     return new Promise<Tracks>((res, rej) => {
       this.apollo.query({
+        fetchPolicy: 'no-cache',
         query: gql`{
                   tracks${forPlaylistFilter} {
                     id

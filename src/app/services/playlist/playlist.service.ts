@@ -32,7 +32,7 @@ export class PlaylistService extends RestfulSpotitubeClientService {
   public async getPlaylists(): Promise<Playlists> {
     return new Promise<Playlists>((res, rej) => {
       this.apollo.query({
-        fetchPolicy: 'network-only',
+        fetchPolicy: 'no-cache',
         query: gql`{
               playlists {
                 id

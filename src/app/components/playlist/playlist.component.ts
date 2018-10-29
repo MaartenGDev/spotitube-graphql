@@ -56,7 +56,6 @@ export class PlaylistComponent {
   }
 
   public setPlaylist(playlist: Playlist): void {
-
     this.playlist = playlist;
     this.trackService.getTracksForPlaylist(this.playlist)
       .then(tracks => this.setTracks(tracks))
