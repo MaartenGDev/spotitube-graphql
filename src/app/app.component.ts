@@ -82,7 +82,9 @@ export class AppComponent implements OnInit {
     let token = settings.token;
 
     this.loginService.settingsChanged$.subscribe(changedSettings => {
-      token = changedSettings.token
+      if (changedSettings) {
+        token = changedSettings.token
+      }
     });
 
     const authMiddleware = new ApolloLink((operation, forward) => {

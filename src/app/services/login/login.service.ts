@@ -1,12 +1,12 @@
 import {Injectable} from '@angular/core';
-import {AppConstants} from '../../app.constants';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
-import {LoginRequest} from '../../models/login-request/login-request.model';
-import {LoginResponse} from '../../models/login-response/login-response.model';
 import {RestfulSpotitubeClientService} from '../restful-spotitube-client/restful-spotitube-client.service';
 import {LoggingService} from '../logging/logging.service';
 import {PlaylistService} from '../playlist/playlist.service';
 import {TrackService} from '../track/track.service';
+import gql from 'graphql-tag';
+import {ApolloQueryResult} from 'apollo-client';
+import {Apollo} from 'apollo-angular';
 
 @Injectable()
 export class LoginService extends RestfulSpotitubeClientService {
@@ -14,14 +14,14 @@ export class LoginService extends RestfulSpotitubeClientService {
   /**
    * Create a new LoginService
    *
-   * @param {HttpClient} httpClient
    * @param playlistService
    * @param trackService
+   * @param apollo
    * @param {LoggingService} loggingService
    */
-  constructor(private httpClient: HttpClient,
-              private playlistService: PlaylistService,
+  constructor(private playlistService: PlaylistService,
               private trackService: TrackService,
+              private apollo: Apollo,
               loggingService: LoggingService) {
     super(loggingService);
 
@@ -49,28 +49,24 @@ export class LoginService extends RestfulSpotitubeClientService {
   }
 
   private handleLoginRequest(user: string, password: string): void {
-    const loginRequestBody = JSON.stringify(new LoginRequest(user, password));
-    const endpointUrl = this.createEndpointUrl(AppConstants.API_LOGIN);
-
-    this.httpClient.post<LoginResponse>(endpointUrl,
-      loginRequestBody,
-      {headers: this.headers})
-      .subscribe(data => this.handleLoginResponse(data), err => this.handleLoginErrors(err));
-  }
-
-  private handleLoginResponse(response: LoginResponse): void {
-    if (response) {
-      this.updateSettings(response.user, response.token);
-    } else {
-      this.loggingService.error('Something wrong happened with the server response. ' +
-        'Did your server respond with valid json?');
-      this.clearStorage();
-    }
+      this.apollo.mutate({
+        mutation: gql`mutation {
+            login(input: {user: "${user}", password: "${password}"}){
+              user
+              token
+            }
+          }`
+      }).subscribe((response: ApolloQueryResult<{ login: {user: string, token: string}}>) => {
+        const {login} = response.data;
+        this.updateSettings(login.user, login.token);
+      }, err => {
+        this.handleLoginErrors(err);
+      });
   }
 
   private handleLoginErrors(error: HttpErrorResponse): void {
     this.handleErrors(error);
-
+    this.loggingService.error('Something wrong happened with the server response. Did your server respond with valid json?');
     this.clearStorage();
   }
 
