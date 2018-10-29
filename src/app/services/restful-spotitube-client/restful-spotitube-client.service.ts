@@ -5,7 +5,6 @@ import {LoggingService} from '../logging/logging.service';
 import {Settings} from '../../models/settings/settings.interface.model';
 import {AppConstants} from '../../app.constants';
 import {SettingsImpl} from '../../models/settings/settings.model';
-import {RequestBody} from '../../models/request-body/request-body.model';
 
 @Injectable()
 export class RestfulSpotitubeClientService {

@@ -30,10 +30,10 @@ export class AppComponent implements OnInit {
               public snackBar: MatSnackBar) {
   }
 
-  ngOnInit(): void {
+  async ngOnInit() {
     this.initSettings();
     this.initErrorSnackbar();
-    this.initApollo();
+    await this.initApollo();
   }
 
   /**
@@ -76,11 +76,14 @@ export class AppComponent implements OnInit {
   }
 
   private async initApollo() {
-    const host = await this.loginService.getSettings();
-    const http = this.httpLink.create({uri: host.server + '/graphql'});
+    const settings = await this.loginService.getSettings();
+    const http = this.httpLink.create({uri: settings.server + '/graphql'});
 
-    let token = '';
-    this.loginService.settingsChanged$.subscribe(settings => token = settings.token);
+    let token = settings.token;
+
+    this.loginService.settingsChanged$.subscribe(changedSettings => {
+      token = changedSettings.token
+    });
 
     const authMiddleware = new ApolloLink((operation, forward) => {
       operation.setContext({

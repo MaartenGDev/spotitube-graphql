@@ -5,6 +5,7 @@ import {LoggingService} from '../logging/logging.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {PlaylistService} from '../playlist/playlist.service';
 import {TrackService} from '../track/track.service';
+import {Apollo} from 'apollo-angular';
 
 describe('LoginService', () => {
   beforeEach(() => {
@@ -16,7 +17,8 @@ describe('LoginService', () => {
         PlaylistService,
         TrackService,
         LoginService,
-        LoggingService
+        LoggingService,
+        Apollo
       ]
     });
   });

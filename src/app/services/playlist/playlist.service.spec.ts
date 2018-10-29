@@ -3,6 +3,7 @@ import {inject, TestBed} from '@angular/core/testing';
 import {PlaylistService} from './playlist.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {LoggingService} from '../logging/logging.service';
+import {Apollo} from 'apollo-angular';
 
 describe('PlaylistService', () => {
   beforeEach(() => {
@@ -12,7 +13,8 @@ describe('PlaylistService', () => {
       ],
       providers: [
         LoggingService,
-        PlaylistService
+        PlaylistService,
+        Apollo
       ]
     });
   });

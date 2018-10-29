@@ -7,6 +7,7 @@ import {SpotitubeAngularModule} from '../../modules/angular.module';
 import {LoggingService} from '../../services/logging/logging.service';
 import {PlaylistService} from '../../services/playlist/playlist.service';
 import {TrackService} from '../../services/track/track.service';
+import {Apollo} from 'apollo-angular';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -25,6 +26,7 @@ describe('LoginComponent', () => {
         LoginService,
         LoggingService,
         PlaylistService,
+        Apollo,
         TrackService
       ]
     })
