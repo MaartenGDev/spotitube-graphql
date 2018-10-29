@@ -16,6 +16,8 @@ import {EditPlaylistDialogComponent} from './dialogs/edit-playlist.dialog/edit-p
 import {NewPlaylistDialogComponent} from './dialogs/new-playlist.dialog/new-playlist.dialog.component';
 import {TrackService} from './services/track/track.service';
 import {AddTrackDialogComponent} from './dialogs/add-track.dialog/add-track.dialog.component';
+import {Apollo} from 'apollo-angular';
+import {HttpLink} from 'apollo-angular-link-http';
 
 @NgModule({
   declarations: [
@@ -42,7 +44,9 @@ import {AddTrackDialogComponent} from './dialogs/add-track.dialog/add-track.dial
     LoggingService,
     LoginService,
     PlaylistService,
-    TrackService
+    TrackService,
+    Apollo,
+    HttpLink
   ],
   bootstrap: [AppComponent]
 })
