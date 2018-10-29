@@ -1,20 +1,18 @@
 import {inject, TestBed} from '@angular/core/testing';
 
 import {PlaylistService} from './playlist.service';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {LoggingService} from '../logging/logging.service';
-import {Apollo} from 'apollo-angular';
+import {ApolloTestingModule} from 'apollo-angular/testing';
 
 describe('PlaylistService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientTestingModule
+        ApolloTestingModule
       ],
       providers: [
         LoggingService,
         PlaylistService,
-        Apollo
       ]
     });
   });

@@ -35,7 +35,6 @@ export class PlaylistsComponent implements OnInit {
   ngOnInit() {
     this.updatePlaylists()
     this.tracksService.tracksUpdated$.subscribe(tracks => this.updatePlaylists());
-
   }
 
   /**

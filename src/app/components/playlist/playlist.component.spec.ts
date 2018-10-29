@@ -5,8 +5,8 @@ import {SpotitubeAngularModule} from '../../modules/angular.module';
 import {SpotitubeMaterialModule} from '../../modules/material.module';
 import {TrackService} from '../../services/track/track.service';
 import {LoggingService} from '../../services/logging/logging.service';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {MinutesPipe} from '../../pipes/minutes.pipe';
+import {ApolloTestingModule} from 'apollo-angular/testing';
 
 describe('PlaylistComponent', () => {
   let component: PlaylistComponent;
@@ -19,7 +19,7 @@ describe('PlaylistComponent', () => {
         MinutesPipe
       ],
       imports: [
-        HttpClientTestingModule,
+        ApolloTestingModule,
         SpotitubeAngularModule,
         SpotitubeMaterialModule
       ],

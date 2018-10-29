@@ -8,6 +8,7 @@ import {SpotitubeAngularModule} from '../../modules/angular.module';
 import {TrackService} from '../../services/track/track.service';
 import {LoggingService} from '../../services/logging/logging.service';
 import {MinutesPipe} from '../../pipes/minutes.pipe';
+import {ApolloTestingModule} from 'apollo-angular/testing';
 
 @NgModule({
   entryComponents: [
@@ -28,6 +29,7 @@ describe('AddTrackDialogComponent', () => {
         MinutesPipe
       ],
       imports: [
+        ApolloTestingModule,
         SpotitubeAngularModule,
         SpotitubeMaterialModule,
         TestModule

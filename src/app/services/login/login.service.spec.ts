@@ -6,12 +6,14 @@ import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {PlaylistService} from '../playlist/playlist.service';
 import {TrackService} from '../track/track.service';
 import {Apollo} from 'apollo-angular';
+import {ApolloTestingModule} from 'apollo-angular/testing';
 
 describe('LoginService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientTestingModule
+        HttpClientTestingModule,
+        ApolloTestingModule
       ],
       providers: [
         PlaylistService,

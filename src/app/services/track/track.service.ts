@@ -1,14 +1,16 @@
 import {Injectable} from '@angular/core';
 import {RestfulSpotitubeClientService} from '../restful-spotitube-client/restful-spotitube-client.service';
-import {HttpClient} from '@angular/common/http';
 import {LoggingService} from '../logging/logging.service';
 
-
 import {Track} from '../../models/track/track.interface';
-import {AppConstants} from '../../app.constants';
 import {Playlist} from '../../models/playlist/playlist.interface.model';
 import {Tracks} from '../../models/tracks/tracks.interface.model';
 import {Subject} from 'rxjs';
+import {Playlists} from '../../models/playlists/playlists.interface.model';
+import gql from 'graphql-tag';
+import {ApolloQueryResult} from 'apollo-client';
+import {TracksImpl} from '../../models/tracks/tracks.model';
+import {Apollo} from 'apollo-angular';
 
 @Injectable()
 export class TrackService extends RestfulSpotitubeClientService {
@@ -25,12 +27,10 @@ export class TrackService extends RestfulSpotitubeClientService {
   /**
    * Create a new TrackService
    *
-   * @param {HttpClient} httpClient
    * @param {LoggingService} loggingService
+   * @param apollo
    */
-  constructor(private httpClient: HttpClient,
-              loggingService: LoggingService) {
-
+  constructor(loggingService: LoggingService, private apollo: Apollo) {
     super(loggingService);
   }
 
@@ -42,23 +42,28 @@ export class TrackService extends RestfulSpotitubeClientService {
    * @return {Promise<Playlists>} The complete and updated list of playlists
    */
   public async addTrackToPlaylist(playlist: Playlist, track: Track): Promise<Tracks> {
-    const endpointUrl = this.getTracksEndpoint(playlist);
-    const params = this.createtokenParam();
-
-    try {
-      const data: Tracks = await this.httpClient.post<Tracks>(endpointUrl,
-        JSON.stringify(track),
-        {
-          headers: this.headers,
-          params: params
-        }
-      ).toPromise();
-      this.tracksUpdated.next();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
+    return new Promise<Tracks>((res, rej) => {
+      this.apollo.mutate({
+        mutation: gql`mutation {
+                    addTrackToPlaylist(playlistId: ${playlist.id},trackId: ${track.id},offlineAvailable: ${track.offlineAvailable}){
+                      id
+                      title
+                      performer
+                      duration
+                      album
+                      playcount
+                      publicationDate
+                      description
+                      offlineAvailable
+                    }
+          }`
+      }).subscribe((response: ApolloQueryResult<{ tracks: Track[] }>) => {
+        const tracks: Tracks = new TracksImpl();
+        tracks.tracks = response.data.tracks;
+        this.tracksUpdated.next();
+        res(tracks);
+      });
+    });
   }
 
   /**
@@ -69,17 +74,28 @@ export class TrackService extends RestfulSpotitubeClientService {
    * @return {Promise<Track[]>} The complete and updated list of tracks belonging to the given playlist
    */
   public async removeTracksFromPlaylist(playlist: Playlist, track: Track): Promise<Tracks> {
-    const endpointUrl = this.getTrackEndpoint(playlist, track);
-    const params = this.createtokenParam();
-
-    try {
-      const data: Tracks = await this.httpClient.delete<Tracks>(endpointUrl, {params: params}).toPromise();
-      this.tracksUpdated.next();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
+    return new Promise<Tracks>((res, rej) => {
+      this.apollo.mutate({
+        mutation: gql`mutation {
+                    removeTrackFromPlaylist(playlistId: ${playlist.id}, trackId: ${track.id}){
+                      id
+                      title
+                      performer
+                      duration
+                      album
+                      playcount
+                      publicationDate
+                      description
+                      offlineAvailable
+                    }
+          }`
+      }).subscribe((response: ApolloQueryResult<{ tracks: Track[] }>) => {
+        const tracks: Tracks = new TracksImpl();
+        tracks.tracks = response.data.tracks;
+        this.tracksUpdated.next(tracks);
+        res(tracks);
+      });
+    });
   }
 
   /**
@@ -87,21 +103,30 @@ export class TrackService extends RestfulSpotitubeClientService {
    *
    * @return {Promise<Track[]>} An array of Tracks.
    */
-  public async getAllTracks(playlist?: Playlist): Promise<Tracks> {
-    let params = this.createtokenParam();
-
-    if (playlist) {
-      params = params.append('forPlaylist', playlist.id.toString());
-    }
-
-    try {
-      const data: Tracks = await this.httpClient.get<Tracks>(this.createEndpointUrl(AppConstants.API_TRACKS),
-        {params: params}).toPromise();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
+  public async getAllTracks(playlist?: Playlist, onlyNotInPlaylist = true): Promise<Tracks> {
+    const inclusiveOrExclusiveFilter = onlyNotInPlaylist ? 'notInPlaylistId' : 'inPlaylistId';
+    const forPlaylistFilter = playlist !== null ? `(${inclusiveOrExclusiveFilter}: ${playlist.id })` : '';
+    return new Promise<Tracks>((res, rej) => {
+      this.apollo.query({
+        query: gql`{
+                  tracks${forPlaylistFilter} {
+                    id
+                    title
+                    performer
+                    duration
+                    album
+                    playcount
+                    publicationDate
+                    description
+                    offlineAvailable
+                  }
+                }`
+      }).subscribe((response: ApolloQueryResult<{ tracks: Track[] }>) => {
+        const tracks: Tracks = new TracksImpl();
+        tracks.tracks = response.data.tracks;
+        res(tracks);
+      });
+    })
   }
 
   /**
@@ -110,33 +135,6 @@ export class TrackService extends RestfulSpotitubeClientService {
    * @return {Promise<Track[]>} An array of Tracks.
    */
   public async getTracksForPlaylist(playlist: Playlist): Promise<Tracks> {
-    const endpointUrl = this.getTracksEndpoint(playlist);
-    const params = this.createtokenParam();
-
-    try {
-      const data: Tracks = await this.httpClient.get<Tracks>(endpointUrl, {params: params}).toPromise();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
-  }
-
-
-  private getTrackEndpoint(playlist: Playlist, track: Track): string {
-    const trackEndpoints = this.getTracksEndpoint(playlist)
-      .concat('/' + track.id);
-
-    return trackEndpoints;
-  }
-
-  private getTracksEndpoint(playlist: Playlist): string {
-    const baseEndpointUrl = this.createEndpointUrl(AppConstants.API_PLAYLISTS);
-
-    const tracksEndpoints = ((baseEndpointUrl.concat('/'))
-      .concat(playlist.id.toString()))
-      .concat(AppConstants.API_TRACKS);
-
-    return tracksEndpoints;
+    return this.getAllTracks(playlist, false);
   }
 }

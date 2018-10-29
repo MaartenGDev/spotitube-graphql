@@ -15,6 +15,8 @@ export class LoginService extends RestfulSpotitubeClientService {
    * Create a new LoginService
    *
    * @param {HttpClient} httpClient
+   * @param playlistService
+   * @param trackService
    * @param {LoggingService} loggingService
    */
   constructor(private httpClient: HttpClient,

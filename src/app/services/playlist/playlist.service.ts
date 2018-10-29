@@ -1,9 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Playlists} from '../../models/playlists/playlists.interface.model';
 import {RestfulSpotitubeClientService} from '../restful-spotitube-client/restful-spotitube-client.service';
-import {HttpClient} from '@angular/common/http';
 import {LoggingService} from '../logging/logging.service';
-import {AppConstants} from '../../app.constants';
 
 
 import {Playlist} from '../../models/playlist/playlist.interface.model';
@@ -18,12 +16,10 @@ export class PlaylistService extends RestfulSpotitubeClientService {
   /**
    * Create a new PlaylistService
    *
-   * @param {HttpClient} httpClient
    * @param {LoggingService} loggingService
    * @param apollo
    */
-  constructor(private httpClient: HttpClient,
-              loggingService: LoggingService, private apollo: Apollo) {
+  constructor(loggingService: LoggingService, private apollo: Apollo) {
 
     super(loggingService);
   }
@@ -36,14 +32,13 @@ export class PlaylistService extends RestfulSpotitubeClientService {
   public async getPlaylists(): Promise<Playlists> {
     return new Promise<Playlists>((res, rej) => {
       this.apollo.query({
+        fetchPolicy: 'network-only',
         query: gql`{
               playlists {
                 id
                 name
                 owner
                 tracks {
-                  id
-                  title
                   duration
                 }
               }
@@ -51,15 +46,17 @@ export class PlaylistService extends RestfulSpotitubeClientService {
       }).subscribe((response: ApolloQueryResult<{ playlists: Playlist[] }>) => {
         const playlists: Playlists = new PlaylistsImpl();
         playlists.playlists = response.data.playlists;
-        playlists.length = playlists.playlists
-          .reduce((totalLength, playlist) => totalLength +
-            playlist.tracks.reduce((totalTrackDuration, track) => totalTrackDuration + track.duration, 0), 0);
-
-        console.log(playlists.length)
-
+        playlists.length = this.calculateLengthOfPlaylist(playlists.playlists);
         res(playlists);
       });
     })
+  }
+
+  private calculateLengthOfPlaylist(playlists: Playlist[]): number {
+    return playlists
+      .reduce((totalLength, playlist) => totalLength +
+        playlist.tracks.reduce((totalTrackDuration, track) => totalTrackDuration + track.duration, 0)
+        , 0);
   }
 
   /**
@@ -69,22 +66,21 @@ export class PlaylistService extends RestfulSpotitubeClientService {
    * @return {Promise<Playlists>} The complete and updated list of playlists
    */
   public async newPlaylist(playlist: Playlist): Promise<Playlists> {
-    const endpointUrl = this.getPlaylistEndpoint(undefined);
-    const params = this.createtokenParam();
-
-    try {
-      const data: Playlists = await this.httpClient.post<Playlists>(endpointUrl,
-        JSON.stringify(playlist),
-        {
-          headers: this.headers,
-          params: params
-        }
-      ).toPromise();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
+    return new Promise<Playlists>((res, rej) => {
+      this.apollo.mutate({
+        mutation: gql`mutation {
+                    createPlaylist(input: {name: "${playlist.name}"}){
+                      id
+                      name
+                      owner
+                    }
+          }`
+      }).subscribe((response: ApolloQueryResult<{ createPlaylist: Playlist[] }>) => {
+        const playlists = new PlaylistsImpl();
+        playlists.playlists = response.data.createPlaylist;
+        res(playlists);
+      });
+    });
   }
 
   /**
@@ -94,22 +90,21 @@ export class PlaylistService extends RestfulSpotitubeClientService {
    * @return {Promise<Playlists>} The complete and updated list of playlists
    */
   public async updatePlaylist(playlist: Playlist): Promise<Playlists> {
-    const endpointUrl = this.getPlaylistEndpoint(playlist);
-    const params = this.createtokenParam();
-
-    try {
-      const data: Playlists = await this.httpClient.put<Playlists>(endpointUrl,
-        JSON.stringify(playlist),
-        {
-          headers: this.headers,
-          params: params
-        }
-      ).toPromise();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
+    return new Promise<Playlists>((res, rej) => {
+      this.apollo.mutate({
+        mutation: gql`mutation {
+                    updatePlaylist(id: ${playlist.id}, input: {name: "${playlist.name}"}){
+                      id
+                      name
+                      owner
+                    }
+          }`
+      }).subscribe((response: ApolloQueryResult<{ updatePlaylist: Playlist[] }>) => {
+        const playlists = new PlaylistsImpl();
+        playlists.playlists = response.data.updatePlaylist;
+        res(playlists);
+      });
+    });
   }
 
   /**
@@ -119,26 +114,20 @@ export class PlaylistService extends RestfulSpotitubeClientService {
    * @return {Promise<Playlists>} The complete and updated list of playlists
    */
   public async deletePlaylist(playlist: Playlist): Promise<Playlists> {
-    const endpointUrl = this.getPlaylistEndpoint(playlist);
-    const params = this.createtokenParam();
-
-    try {
-      const data: Playlists = await this.httpClient.delete<Playlists>(endpointUrl,
-        {params: params}).toPromise();
-      return data;
-    } catch (err) {
-      this.handleErrors(err)
-      return Promise.reject(err);
-    }
-  }
-
-  private getPlaylistEndpoint(playlist: Playlist): string {
-    const baseEndpointUrl = this.createEndpointUrl(AppConstants.API_PLAYLISTS);
-
-    if (playlist) {
-      return (baseEndpointUrl.concat('/')).concat(playlist.id.toString());
-    } else {
-      return baseEndpointUrl;
-    }
+    return new Promise<Playlists>((res, rej) => {
+      this.apollo.mutate({
+        mutation: gql`mutation {
+                    deletePlaylist(id: ${playlist.id}){
+                      id
+                      name
+                      owner
+                    }
+          }`
+      }).subscribe((response: ApolloQueryResult<{ deletePlaylist: Playlist[] }>) => {
+        const playlists = new PlaylistsImpl();
+        playlists.playlists = response.data.deletePlaylist;
+        res(playlists);
+      });
+    });
   }
 }
